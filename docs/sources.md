@@ -37,7 +37,4 @@ Accessed 2026-10-20. Grade: **A** = official government or Parliament record (re
 - [CIO.com: IRCTC's new servers](https://www.cio.com/article/218286/how-irctc-s-new-servers-make-bookings-and-enquiries-easier.html): old (about 2019) figures, e.g. ~7,000 tickets/min then. Historical only.
 - [Samachar News](https://thesamacharnews.com/irctc-new-booking-system-2026-tatkal-upgrade/): claims 2 crore simultaneous users and 3 crore load test. **Unverified. Do not use.**
 
-## Gaps to close in Week 2
-1. Read Lok Sabha Q2787 (A3) and find the 11 Dec 2025 reply on sansad.in.
-2. Still **no official document** on the new PRS's internal architecture (containers, database, cloud provider). PIB says only "cloud-enabled". Check CRIS (cris.org.in) tenders/publications and PRID 2295409.
-3. Confirm whether the new PRS runs on public cloud or government/MeitY cloud. Not stated anywhere official found so far.
+
