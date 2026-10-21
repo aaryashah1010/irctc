@@ -56,8 +56,4 @@ Source IDs refer to `sources.md`. "Official" means PIB or Parliament; anything e
 | Beta Tatkal completion | >5% more within 3 min; about 3% within 5 min | News, Aug 2026 (B2) |
 | 1.5 lakh/min capacity | Target, not yet demonstrated | A1, A2 |
 
-## 7. Open questions for Week 2
-1. Is the new PRS on public cloud, MeitY-empanelled cloud, or CRIS data centres?
-2. Read Lok Sabha Q2787 (A3) and find the 11 Dec 2025 reply.
-3. Find the PIB PRID 2295409 backgrounder and any CRIS tender/publication describing the platform.
-4. Get a real observed peak (tickets/min at a Tatkal window) from an official source.
+
