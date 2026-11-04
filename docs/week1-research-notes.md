@@ -13,7 +13,7 @@ Source IDs refer to `sources.md`. "Official" means PIB or Parliament; anything e
 | 2014 | Next Generation e-Ticketing (NGeT) launched; RHEL-based open-source infrastructure (Red Hat award) | A2, C2 |
 | Jun 2025 | Aadhaar-authenticated Tatkal (1 Jul), OTP (15 Jul); PIB announces new PRS, 1.5 lakh/min, target "by December 2025" | A1, B5 |
 | Jul 2025 | RailOne app launched | A2 |
-| Dec 2025 | Lok Sabha reply: 3.02 crore IDs deactivated, +65% Tatkal availability time on 322 trains | B1 |
+| Dec 2025 | Lok Sabha reply: 3.02 crore IDs deactivated, Tatkal availability time up on about 65% of 322 OTP trains (PIB, 11 Dec 2025) | B1 |
 | 15 Jul 2026 | New IRCTC website beta | A2, B2 |
 | Aug 2026 | Phased train migration to the new PRS begins (target date slipped from Dec 2025) | A2, B3 |
 
@@ -51,7 +51,7 @@ Source IDs refer to `sources.md`. "Official" means PIB or Parliament; anything e
 ## 6. Outcome data
 | Measure | Result | Status |
 |---------|--------|--------|
-| Tatkal confirmed-availability time | +65% on 322 trains (online Aadhaar-OTP) | Official reply (B1) |
+| Tatkal confirmed-availability time | Increased on about 65% of 322 trains (online Aadhaar-OTP); about 95% of 96 popular trains. Share of trains, not size of improvement. | Official reply (B1) |
 | Counter OTP trains | 211 (as of 4 Dec 2025); availability time up on about 95% of 96 popular trains | B1 |
 | Beta Tatkal completion | >5% more within 3 min; about 3% within 5 min | News, Aug 2026 (B2) |
 | 1.5 lakh/min capacity | Target, not yet demonstrated | A1, A2 |
