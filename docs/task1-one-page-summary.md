@@ -20,7 +20,7 @@ Demand-shaping measures include Aadhaar authentication for Tatkal from July 2025
 
 ## 4. Reported Outcomes
 
-- Tatkal confirmed-availability time increased on about 65% of the 322 trains with Aadhaar-OTP (and about 95% of 96 popular trains), per the Ministry of Railways release of 11 Dec 2025. [3]
+- Tatkal confirmed-availability time improved in about 65% of 322 trains and about 95% of 96 popular trains (proportion of trains, not size of improvement), per the Ministry of Railways release of 11 Dec 2025. [3]
 - Early beta reporting showed over 5% more Tatkal bookings completed within three minutes and about 3% more within five minutes. [4]
 - The full new-system capacity target remains a target; it has not yet been publicly demonstrated at peak Tatkal load. [1, 2]
 
