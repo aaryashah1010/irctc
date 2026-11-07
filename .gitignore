@@ -1,0 +1,16 @@
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Environment secrets
+.env
+.env.*
+
+# Test and load-test output
+.coverage
+htmlcov/
+locust_report.html

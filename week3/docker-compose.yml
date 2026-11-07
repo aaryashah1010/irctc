@@ -1,0 +1,21 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: irctc-postgres
+    environment:
+      POSTGRES_DB: irctc
+      POSTGRES_USER: irctc_user
+      POSTGRES_PASSWORD: local_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - irctc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irctc_user -d irctc"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  irctc_postgres_data:

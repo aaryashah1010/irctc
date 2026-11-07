@@ -1,0 +1,7 @@
+
+fastapi
+uvicorn
+psycopg[binary]
+pytest
+httpx
+locust
