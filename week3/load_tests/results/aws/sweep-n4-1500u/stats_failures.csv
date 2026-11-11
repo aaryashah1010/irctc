@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,/book,CatchResponseError('unexpected status 502'),1,2026-11-11T07:36:01Z,2026-11-11T07:36:01Z
+GET,/availability,HTTPError('502 Server Error: Bad Gateway for url: /availability'),1,2026-11-11T07:36:34Z,2026-11-11T07:36:34Z

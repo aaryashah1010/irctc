@@ -63,6 +63,11 @@ def close_pool():
 
 def initialize_database():
     with get_connection() as conn:
+        # Several API workers or instances can start at the same time. The
+        # lock makes them run this setup one after another instead of racing
+        # on CREATE TABLE. It is released when the transaction commits.
+        conn.execute("SELECT pg_advisory_xact_lock(457001)")
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS train_inventory (
                 train_id INTEGER PRIMARY KEY,
