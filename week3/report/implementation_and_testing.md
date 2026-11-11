@@ -115,6 +115,8 @@ The initial workload is read-oriented:
 - 90% availability requests.
 - 10% health-check requests.
 
+*Update:* the workload in `load_tests/locustfile.py` now sends 90% availability and 10% booking requests, so the results below (recorded with the earlier read-only mix) must not be compared directly with new runs.
+
 These percentages are a modelling assumption for our experiment, not measured statistics from real IRCTC traffic.
 
 The load tests helped us establish an initial local performance baseline.
@@ -156,10 +158,13 @@ irctc/
     │   ├── conftest.py
     │   └── test_bookings.py
     ├── load_tests/
+    │   ├── locustfile.py
+    │   └── shapes/
+    │       ├── ramp.py
+    │       └── burst.py
     ├── Dockerfile
     ├── docker-compose.yml
-    ├── requirements.txt
-    └── locustfile.py
+    └── requirements.txt
 ```
 
 **Important files:**
@@ -168,7 +173,8 @@ irctc/
 - `app/database.py` — Database connection and table initialization.
 - `tests/test_bookings.py` — Health and concurrent-booking correctness tests.
 - `tests/conftest.py` — Configures the Python import path for tests.
-- `locustfile.py` — Simulated user workload.
+- `load_tests/locustfile.py` — Simulated user workload (availability and booking requests).
+- `load_tests/shapes/ramp.py` and `burst.py` — Ramp and Tatkal-style burst load profiles.
 - `Dockerfile` — Builds the API image.
 - `docker-compose.yml` — Configures the API and PostgreSQL services.
 - `requirements.txt` — Python dependencies.
@@ -251,8 +257,20 @@ The test fixture creates and cleans up a separate test train with ID `99001`.
 With the Dockerized application running, execute:
 
 ```powershell
-python -m locust -f week3/locustfile.py --host http://127.0.0.1:8000
+python -m locust -f week3/load_tests/locustfile.py --host http://127.0.0.1:8000
 ```
+
+To run a scripted load profile instead of setting users by hand, add a shape file. Set the peak with `LOCUST_PEAK_USERS` (default 200):
+
+```powershell
+# Ramp: warm-up, steady ramp, cool-down
+python -m locust -f week3/load_tests/locustfile.py,week3/load_tests/shapes/ramp.py --host http://127.0.0.1:8000
+
+# Tatkal-style burst: quiet, jump to peak in about 10 s, hold, drop
+python -m locust -f week3/load_tests/locustfile.py,week3/load_tests/shapes/burst.py --host http://127.0.0.1:8000
+```
+
+Bookings in the load test go to train `12952`, which is seeded with 1,000,000 seats so a run does not sell out.
 
 Open:
 

@@ -1,7 +1,7 @@
-
 fastapi
 uvicorn
 psycopg[binary]
+psycopg-pool
 pytest
 httpx
 locust

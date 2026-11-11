@@ -1,3 +1,4 @@
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
@@ -5,7 +6,8 @@ import pytest
 
 from app.database import get_connection
 
-BASE_URL = "http://127.0.0.1:8000"
+# Override with API_BASE_URL when the API runs on another port or host.
+BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 TEST_TRAIN_ID = 99001
 
 

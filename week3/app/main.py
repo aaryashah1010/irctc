@@ -5,13 +5,14 @@ from typing import Annotated
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.database import get_connection, initialize_database
+from app.database import close_pool, get_connection, initialize_database
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     initialize_database()
     yield
+    close_pool()
 
 
 app = FastAPI(
