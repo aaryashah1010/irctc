@@ -145,6 +145,68 @@ API instances and the load generator) cost an estimated **$1 to $1.50**. This
 excludes small items we did not measure (load balancer usage charges, burst-credit
 charges on `t3` instances, S3 and data transfer).
 
+### 3.5 Follow-up experiments
+
+These runs were collected in a second AWS session on 12 November 2026. They
+extend the fixed-capacity and initial burst experiments above. Each setting was
+run once; comparisons are observations, not statistically significant estimates.
+
+**Concurrent correctness (C1).** The correctness suite passed **29/29 checks**
+with one instance and **29/29** with three instances. The checks cover concurrent
+bookings through the AWS deployment. Database verification files for the
+follow-up ramp, scheduled burst, shedding and failure runs report zero inventory
+consistency violations.
+
+**Ramp (R0–R2).** The same 10-to-1,500-user ramp was run with one fixed instance,
+three fixed instances, and autoscaling from one to six. All three Locust runs
+recorded zero failed requests.
+
+| Run | Capacity | Requests | Requests/s | Median | p95 | p99 | Peak API CPU | Peak DB CPU |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| R0 | 1 fixed | 424,767 | 416 | 840 ms | 2,000 ms | 2,300 ms | 100% | 27% |
+| R1 | 3 fixed | 871,184 | 853 | 91 ms | 1,600 ms | 2,100 ms | 81% | 49% |
+| R2 | autoscaling, peak 6 | 565,873 | 554 | 380 ms | 1,800 ms | 2,200 ms | 100% | 39% |
+
+R1 handled more traffic with lower median latency than R0. R2 reached six
+instances but did not outperform R1 in this single run. The experiment does not
+establish why; autoscaling activity and run-to-run variation are possible factors.
+See [the ramp chart](figures/fig_d_ramp.png).
+
+**Scheduled pre-scaling.** A scheduled action was used to add capacity ahead of
+the burst. The run recorded 719,752 requests, 1,074 requests/s, median latency
+66 ms (p95 1,300 ms, p99 1,600 ms), zero Locust failures, and a peak of six
+instances. Database CPU peaked at 59%. The saved schedule record gives the
+scheduled action start as `2026-11-12T08:53:00Z`. This is a separate run from the
+manual pre-scaling result above; their totals should not be compared as if they
+were repetitions under identical timing.
+
+**Load shedding (R5).** The run was configured with an admission limit of 32
+in-flight requests per worker, but Locust recorded **zero 429 responses**. It
+therefore did not demonstrate that load shedding protects served-request
+latency. The run served 234,674 requests; the comparable reactive run served
+253,875. Median and p95 latency for `/availability` were 1,400/1,800 ms with the
+configured limit, versus 1,300/1,700 ms for the reactive run. For `/book` they
+were 1,500/1,900 ms versus 1,400/1,700 ms. These measurements do not support a
+latency benefit from the configured run. The admission-control mechanism or its
+deployment needs investigation before drawing a conclusion. See
+[the shedding chart](figures/fig_e_shed.png) and
+[the combined burst chart](figures/fig_g_burst_all.png).
+
+**Instance failure.** During a steady-load run, instance `i-01eabdec722d3f55f`
+was terminated at `2026-11-12T09:15:22Z`. Locust recorded 501,206 requests,
+1,392 requests/s, and 5,964 failures. The failures occurred over a 41-second
+window, from 2.27 to 2.95 minutes after the run began; the instance termination
+was at 1.98 minutes. CloudWatch metrics recorded 5,964 load-balancer 5xx and
+zero target 5xx, with a minimum of two instances in service. Database
+verification found zero consistency violations. This shows a brief availability
+impact during instance replacement while booking consistency was maintained;
+the available measurements do not identify the exact load-balancer failure
+mechanism. See [the failure chart](figures/fig_f_failure.png).
+
+The machine-readable figures and aggregates are in
+[`summary_extra.json`](figures/summary_extra.json). The charts were generated
+from the saved Locust CSV files and CloudWatch metric snapshots.
+
 ## 4. Findings
 
 1. **The application tier scales almost linearly** while the data is spread out,
@@ -158,6 +220,16 @@ charges on `t3` instances, S3 and data transfer).
    balancer keeps idle connections for 60 s while uvicorn closed them after 5 s,
    which produced rare `502` errors (at most 22 in 541,140 requests). Setting the
    server keep-alive to 75 s removed them in the burst runs.
+6. **The fixed-capacity ramp improved when moving from one to three instances,**
+   but the single autoscaled run did not exceed the three-instance result. This
+   warrants repeated runs before making a scaling-policy claim.
+7. **Scheduled capacity reached the burst ahead of demand,** with 66 ms median
+   latency and no Locust failures in that run.
+8. **The load-shedding experiment was inconclusive.** No 429 responses were
+   recorded, so the intended admission control was not observed under load.
+9. **Terminating an instance caused a short 5xx window** in the failure test,
+   even though the database remained consistent. Availability during replacement
+   needs further investigation.
 
 ## 5. Limitations
 
@@ -171,6 +243,9 @@ charges on `t3` instances, S3 and data transfer).
   users across India.
 - Single-AZ database and no read replica; a production system would not do this.
 - `t3` instances are burstable; the runs used the default unlimited mode.
+- Follow-up runs (R0–R5 and C1) were run once per setting. In particular, R5
+  produced no shed responses, and the instance-failure run had a short 5xx window;
+  neither result should be generalized beyond the observed run.
 - The first, light run (100 users from a laptop, 63 requests/s, median 29 ms, no
   failures, instance CPU about 8%) only showed that one instance was far from
   saturated at that load.
@@ -187,7 +262,43 @@ bash week3/aws/sweep.sh "1 2 3 4 6" 1500 180s          # hot train (tag: sweep)
 bash week3/aws/burst-experiment.sh                      # R3 and R4
 python week3/analysis/collect_metrics.py
 python week3/analysis/make_charts.py
+python week3/analysis/make_charts_extra.py
 bash week3/aws/teardown.sh --all                        # remove everything
 ```
 
 Raw results (CSV files and logs) are in `week3/load_tests/results/aws/`.
+
+## 7. Live AWS resource check and teardown
+
+On **14 November 2026**, the AWS CLI (`aws-cli/2.39.3`) was installed and
+authenticated in the terminal. The initial read-only check in `ap-south-1`
+found the following resources active:
+
+| Resource | Observed state |
+|---|---|
+| Auto Scaling group `irctc-asg` | Min 1, max 6, desired 1; one healthy instance in service |
+| API instance | One `t3.small`, running |
+| Load generator | One `c6i.xlarge`, running |
+| RDS `irctc-db` | Available, `db.t3.medium` |
+| Load balancer `irctc-alb` | Active |
+| Results bucket `irctc-results-…` | Present |
+
+Before teardown, these resources cost about **$0.32 per hour ($7.70 per day)**
+using the approximate hourly prices above, before load-balancer usage charges,
+data transfer, storage and other metered usage.
+
+The project resources were then shut down. The API and load-generator instances
+were terminated; the Auto Scaling group, load balancer, target group, launch
+template, RDS instance, ECR repository, project security groups, subnet group,
+IAM role and instance profile were deleted. The project CloudWatch alarm query
+returned no alarms. Final checks found no project EC2 instances, ASG, RDS
+instance, ALB, or ECR repository.
+
+To preserve data, a final manual RDS snapshot,
+`irctc-db-final-20261114`, was created and verified **available (100%)** before
+the database instance was deleted. The S3 bucket `irctc-results-888348805474`
+was kept with the experiment artifacts. These retained storage resources may
+still incur storage charges; no running project compute or database remains.
+
+The load-shedding result still needs a corrected rerun before that experiment
+can be considered complete.

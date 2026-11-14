@@ -42,11 +42,13 @@ class IRCTCUser(HttpUser):
 
     @task(READ_WEIGHT)
     def check_availability(self):
-        self.client.get(
+        with self.client.get(
             "/availability",
             params={"train_id": READ_TRAIN_ID},
             name="/availability",
-        )
+            catch_response=True,
+        ) as response:
+            self._judge(response, "/availability")
 
     @task(BOOK_WEIGHT)
     def book_seat(self):
@@ -63,7 +65,17 @@ class IRCTCUser(HttpUser):
         with self.client.post(
             "/book", json=payload, name="/book", catch_response=True
         ) as response:
-            if response.status_code in (201, 409):
-                response.success()
-            else:
-                response.failure(f"unexpected status {response.status_code}")
+            self._judge(response, "/book")
+
+    @staticmethod
+    def _judge(response, name):
+        """201, 409 (sold out) and 200 are valid answers. A 429 means the server
+        shed the request (experiment R5); it is counted as a failure under its own
+        name so that its fast reply does not distort the latency of served requests."""
+        if response.status_code in (200, 201, 409):
+            response.success()
+        elif response.status_code == 429:
+            response.request_meta["name"] = f"{name} (shed 429)"
+            response.failure("shed by admission control (429)")
+        else:
+            response.failure(f"unexpected status {response.status_code}")

@@ -1,0 +1,5 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,/book,CatchResponseError('unexpected status 504'),745,2026-11-12T09:15:53Z,2026-11-12T09:16:06Z
+GET,/availability,CatchResponseError('unexpected status 502'),2212,2026-11-12T09:15:36Z,2026-11-12T09:15:43Z
+POST,/book,CatchResponseError('unexpected status 502'),2216,2026-11-12T09:15:36Z,2026-11-12T09:15:43Z
+GET,/availability,CatchResponseError('unexpected status 504'),791,2026-11-12T09:15:53Z,2026-11-12T09:16:06Z

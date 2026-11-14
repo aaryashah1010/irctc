@@ -1,0 +1,152 @@
+{
+ "passed": 29,
+ "total": 29,
+ "all_passed": true,
+ "results": [
+  {
+   "check": "S1 200 concurrent bookings, 10 seats: exactly 10 succeed",
+   "passed": true,
+   "detail": "{201: 10, 409: 190}"
+  },
+  {
+   "check": "S1 the other 190 are rejected with 409",
+   "passed": true,
+   "detail": "{201: 10, 409: 190}"
+  },
+  {
+   "check": "S1 no other status codes",
+   "passed": true,
+   "detail": "{201: 10, 409: 190}"
+  },
+  {
+   "check": "S1 availability is exactly 0 (never negative)",
+   "passed": true,
+   "detail": "{'train_id': 99001, 'total_seats': 10, 'available_seats': 0}"
+  },
+  {
+   "check": "S2 40 more bookings after sell-out: all 409",
+   "passed": true,
+   "detail": "{409: 40}"
+  },
+  {
+   "check": "S2 availability still 0",
+   "passed": true,
+   "detail": "{'train_id': 99001, 'total_seats': 10, 'available_seats': 0}"
+  },
+  {
+   "check": "S3 concurrent 3-seat bookings, 10 seats: exactly 3 succeed",
+   "passed": true,
+   "detail": "{201: 3, 409: 47}"
+  },
+  {
+   "check": "S3 exactly 1 seat left",
+   "passed": true,
+   "detail": "{'train_id': 99002, 'total_seats': 10, 'available_seats': 1}"
+  },
+  {
+   "check": "S3 asking for 2 seats when 1 is left is rejected (409)",
+   "passed": true,
+   "detail": "409"
+  },
+  {
+   "check": "S3 the rejected request did not change availability",
+   "passed": true,
+   "detail": "{'train_id': 99002, 'total_seats': 10, 'available_seats': 1}"
+  },
+  {
+   "check": "S3 the last seat can still be booked (201)",
+   "passed": true,
+   "detail": "201"
+  },
+  {
+   "check": "S3 and then nothing is left (409)",
+   "passed": true,
+   "detail": "409"
+  },
+  {
+   "check": "S4 concurrent bookings for 1 seat: exactly 1 succeeds",
+   "passed": true,
+   "detail": "{201: 1, 409: 99}"
+  },
+  {
+   "check": "S4 asking for more seats than exist is rejected (409)",
+   "passed": true,
+   "detail": "409"
+  },
+  {
+   "check": "S5 invalid input (seats = 0) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (seats = 7) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (seats = -1) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (seats is text) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (empty name) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (name of spaces only) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (name over 100 characters) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (train_id = 0) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (train_id = -5) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 invalid input (name missing) is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 malformed JSON body is rejected with 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 booking an unknown train returns 404",
+   "passed": true,
+   "detail": "404"
+  },
+  {
+   "check": "S5 availability of an unknown train returns 404",
+   "passed": true,
+   "detail": "404"
+  },
+  {
+   "check": "S5 availability with a non-numeric train id returns 422",
+   "passed": true,
+   "detail": "422"
+  },
+  {
+   "check": "S5 health endpoint answers ok",
+   "passed": true,
+   "detail": ""
+  }
+ ]
+}

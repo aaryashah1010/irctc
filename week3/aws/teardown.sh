@@ -51,7 +51,10 @@ fi
 TG_ARN="$(aws elbv2 describe-target-groups --names "$TG_NAME" \
   --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || true)"
 if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
-  aws elbv2 delete-target-group --target-group-arn "$TG_ARN" || true
+  for _ in 1 2 3 4 5 6; do
+    aws elbv2 delete-target-group --target-group-arn "$TG_ARN" 2>/dev/null && break
+    sleep 10   # still attached to the load balancer that is being deleted
+  done
 fi
 
 log "Launch template"
@@ -71,7 +74,8 @@ if [ "$ALL" = "1" ]; then
   log "Security groups, instance role and ECR repository"
   aws s3 rb "s3://${PREFIX}-results-${ACCOUNT_ID}" --force >/dev/null 2>&1 || true
   aws iam delete-role-policy --role-name "$ROLE_NAME" --policy-name "${PREFIX}-results-bucket" 2>/dev/null || true
-  for name in "$APP_SG_NAME" "$DB_SG_NAME" "$ALB_SG_NAME" "${PREFIX}-loadgen-sg"; do
+  # order matters: the database group refers to the app group, which refers to the load balancer group
+  for name in "$DB_SG_NAME" "$APP_SG_NAME" "$ALB_SG_NAME" "${PREFIX}-loadgen-sg"; do
     id="$(sg_id "$name")"
     [ -n "$id" ] && { aws ec2 delete-security-group --group-id "$id" 2>/dev/null || echo "could not delete ${name} yet (retry in a minute)"; }
   done

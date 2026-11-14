@@ -28,7 +28,8 @@ aws ecr get-login-password --region ${REGION} | docker login --username AWS --pa
 docker run -d --name api --restart always -p 8000:8000 \\
   -e DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME} \\
   -e DB_POOL_MAX_SIZE=${DB_POOL_MAX_SIZE} \\
-  -e UVICORN_WORKERS=${UVICORN_WORKERS} \\
+  -e UVICORN_WORKERS=${UVICORN_WORKERS} \
+  -e ADMISSION_LIMIT=${ADMISSION_LIMIT} \\
   ${ECR_URI}:${IMAGE_TAG}
 EOF
 USER_DATA_B64="$(base64 -w0 "${TMP_DIR}/user-data.sh")"
@@ -108,6 +109,8 @@ if [ -z "$EXISTING_ASG" ]; then
     --default-instance-warmup 120 \
     --tags "Key=Project,Value=${PROJECT_TAG},PropagateAtLaunch=true"
 fi
+# Group metrics (instances in service) are off by default
+aws autoscaling enable-metrics-collection --auto-scaling-group-name "$ASG_NAME" --granularity 1Minute
 
 cat > "${TMP_DIR}/scaling.json" <<EOF
 {

@@ -5,7 +5,7 @@
 **Project theme:** Scalability & High-Traffic Events  
 **Case study:** IRCTC-style railway ticket booking system  
 **Repository:** https://github.com/aaryashah1010/irctc  
-**Current stage:** Local application development, correctness testing, and initial load testing completed
+**Current stage:** Local implementation and AWS scaling experiments completed; AWS compute has been shut down, and one load-shedding experiment remains inconclusive
 
 ---
 
@@ -341,7 +341,8 @@ The measurements should therefore be treated as an initial development baseline,
 
 ## 7. Current Architecture
 
-The application currently follows this architecture:
+The project has both a local Docker Compose setup and an AWS experimental
+deployment. Locally, the application follows this architecture:
 
 ```text
 Locust / API client
@@ -353,17 +354,11 @@ FastAPI application
 PostgreSQL database
 ```
 
-Docker Compose manages the application and database containers.
+Docker Compose manages the local application and database containers. The AWS
+deployment and measured results are documented in
+[`aws_experiments.md`](aws_experiments.md).
 
-At present, there is only one API service and one database service. We have not yet deployed the application on AWS or configured a cloud load balancer or autoscaling group.
-
----
-
-## 8. Proposed AWS Phase
-
-The next phase is to deploy the working application on AWS and evaluate horizontal scaling.
-
-### Proposed architecture
+### AWS experimental architecture
 
 ```text
 Locust load generator
@@ -384,21 +379,11 @@ Amazon RDS
 for PostgreSQL
 ```
 
-CloudWatch will be used to monitor relevant infrastructure and application metrics.
-
-This is the proposed experimental architecture, not an already deployed system.
-
-### Suggested implementation sequence
-
-1. Review and finalise the AWS architecture.
-2. Estimate costs and establish resource cleanup procedures.
-3. Deploy PostgreSQL to Amazon RDS, with appropriate network access controls.
-4. Deploy the containerized API to EC2.
-5. Configure an Application Load Balancer and health checks.
-6. Configure an Auto Scaling Group with appropriate scaling policies.
-7. Set up CloudWatch monitoring.
-8. Run comparable workloads against the AWS deployment.
-9. Compare throughput, latency, errors, resource utilization, and scaling behaviour.
+The AWS experiment used an Application Load Balancer, an EC2 Auto Scaling Group,
+Amazon RDS for PostgreSQL, and CloudWatch metrics. Fixed-capacity, ramp, burst,
+scheduled pre-scaling, correctness, instance-failure, and load-shedding runs were
+collected. See [`aws_experiments.md`](aws_experiments.md) for configuration,
+results, limitations, and figures.
 
 ### Important technical considerations
 
@@ -412,9 +397,7 @@ This is the proposed experimental architecture, not an already deployed system.
 
 ---
 
-## 9. Handover Checklist
-
-Before beginning AWS deployment, confirm the following:
+## 8. Handover Checklist
 
 - [x] FastAPI booking API implemented.
 - [x] PostgreSQL schema and initial train inventory created.
@@ -423,22 +406,29 @@ Before beginning AWS deployment, confirm the following:
 - [x] Initial Locust tests completed.
 - [x] Initial CPU and memory observations collected.
 - [x] Code pushed to GitHub.
-- [ ] Local performance results saved as a committed project report.
-- [ ] AWS architecture and cost estimate reviewed.
-- [ ] AWS application and database deployed.
-- [ ] Load balancer and autoscaling configured.
-- [ ] CloudWatch monitoring configured.
-- [ ] AWS load tests and comparison completed.
-- [ ] Final conclusions and limitations documented.
+- [x] Local performance results documented.
+- [x] AWS architecture and experimental cost estimate documented.
+- [x] AWS application and database deployed for the experiments.
+- [x] Load balancer and autoscaling configured.
+- [x] CloudWatch metrics collected for the experiments.
+- [x] AWS load tests and comparison documented in [`aws_experiments.md`](aws_experiments.md).
+- [x] Experimental conclusions and limitations documented.
+- [ ] Re-run or correct the load-shedding experiment; the saved R5 run produced no 429 responses.
+- [x] Shut down AWS compute and services; preserve the RDS snapshot and S3 experiment results.
 
----
-
-## 10. Final Summary
+## 9. Final Summary
 
 The local phase has produced a working, containerized railway booking API with a PostgreSQL backend, automated tests for concurrent booking correctness, and initial Locust performance measurements.
 
-The next major milestone is AWS deployment. The aim is to investigate whether distributing requests across multiple API instances, combined with managed database infrastructure and autoscaling, improves performance and resilience under increasing demand.
+The AWS phase evaluated horizontal scaling, hot-train contention, ramp and burst
+traffic, scheduled capacity, correctness, and instance failure. The saved results
+show that spreading bookings scales better than concentrating them on one train,
+pre-scaling gave lower burst latency than reactive scaling, and the failure test
+had a short load-balancer 5xx window while preserving database consistency. The
+R5 shedding result is inconclusive because it produced no 429 responses.
 
-The cloud phase should build on the existing application and measurements rather than replace them with an unrelated implementation.
-
-**Current status:** Local implementation and initial testing are complete; cloud deployment and scaling experiments remain to be done.
+**Current status (14 November 2026):** Implementation and experiment analysis
+are documented. The AWS CLI was verified, the live deployment was checked, then
+its compute and services were shut down. The final RDS snapshot and S3 experiment
+results were retained. The load-shedding experiment still needs a corrected
+rerun; see [`aws_experiments.md`](aws_experiments.md) for the shutdown record.

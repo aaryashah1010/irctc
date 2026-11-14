@@ -14,8 +14,17 @@ from pathlib import Path
 RESULTS = Path(__file__).resolve().parent.parent / "load_tests" / "results" / "aws"
 ASG = "irctc-asg"
 DB = "irctc-db"
-ALB = "app/irctc-alb/a40a091b880df907"
 REGION = "ap-south-1"
+
+
+def current_alb_dimension():
+    """The load balancer id changes with every deployment, so look it up."""
+    out = subprocess.run(
+        ["aws", "elbv2", "describe-load-balancers", "--region", REGION,
+         "--names", "irctc-alb", "--query", "LoadBalancers[0].LoadBalancerArn",
+         "--output", "text"], capture_output=True, text=True)
+    arn = out.stdout.strip()
+    return arn.split("loadbalancer/")[-1] if "loadbalancer/" in arn else None
 
 
 def parse(ts):
@@ -40,11 +49,40 @@ def metric(namespace, name, dim_name, dim_value, stat, start, end):
                   key=lambda p: p["t"])
 
 
-def main(only=()):
+def target_group_dimension():
+    out = subprocess.run(
+        ["aws", "elbv2", "describe-target-groups", "--region", REGION,
+         "--names", "irctc-tg", "--query", "TargetGroups[0].TargetGroupArn",
+         "--output", "text"], capture_output=True, text=True)
+    arn = out.stdout.strip()
+    return arn.split(":")[-1] if "targetgroup/" in arn else None
+
+
+def healthy_hosts(alb, tg, start, end):
+    """Instances the load balancer sees as healthy. Used when the Auto Scaling
+    group did not publish GroupInServiceInstances (group metrics are off by default)."""
+    out = subprocess.run(
+        ["aws", "cloudwatch", "get-metric-statistics", "--region", REGION,
+         "--namespace", "AWS/ApplicationELB", "--metric-name", "HealthyHostCount",
+         "--dimensions", f"Name=LoadBalancer,Value={alb}", f"Name=TargetGroup,Value={tg}",
+         "--start-time", start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+         "--end-time", end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+         "--period", "60", "--statistics", "Maximum", "--output", "json"],
+        capture_output=True, text=True, check=True).stdout
+    return sorted(({"t": p["Timestamp"], "v": p["Maximum"]}
+                   for p in json.loads(out)["Datapoints"]), key=lambda p: p["t"])
+
+
+def main(only=(), force=False):
+    alb = current_alb_dimension()
+    tg = target_group_dimension()
+    print("load balancer:", alb)
     for meta_file in sorted(RESULTS.glob("*/meta.json")):
         meta = json.loads(meta_file.read_text())
         if only and not any(o in meta["name"] for o in only):
             continue
+        if (meta_file.parent / "metrics.json").exists() and not force:
+            continue  # keep metrics saved from an earlier deployment
         # pad the window a little so edge minutes are included
         start = parse(meta["start"]) - timedelta(minutes=1)
         end = parse(meta["end"]) + timedelta(minutes=2)
@@ -57,17 +95,25 @@ def main(only=()):
                              "DBInstanceIdentifier", DB, "Average", start, end),
             "db_connections": metric("AWS/RDS", "DatabaseConnections",
                                      "DBInstanceIdentifier", DB, "Maximum", start, end),
-            "alb_target_response_s": metric("AWS/ApplicationELB", "TargetResponseTime",
-                                            "LoadBalancer", ALB, "Average", start, end),
-            "alb_p95_s": metric("AWS/ApplicationELB", "TargetResponseTime",
-                                "LoadBalancer", ALB, "p95", start, end),
-            "alb_requests": metric("AWS/ApplicationELB", "RequestCount",
-                                   "LoadBalancer", ALB, "Sum", start, end),
         }
+        for key, name, stat in [
+            ("alb_target_response_s", "TargetResponseTime", "Average"),
+            ("alb_p95_s", "TargetResponseTime", "p95"),
+            ("alb_requests", "RequestCount", "Sum"),
+            ("alb_target_5xx", "HTTPCode_Target_5XX_Count", "Sum"),
+            ("alb_elb_5xx", "HTTPCode_ELB_5XX_Count", "Sum"),
+        ]:
+            data[key] = (metric("AWS/ApplicationELB", name, "LoadBalancer", alb,
+                                stat, start, end) if alb else [])
+        if not data["instances"] and alb and tg:
+            data["instances"] = healthy_hosts(alb, tg, start, end)
+            data["instances_source"] = "ALB HealthyHostCount"
         (meta_file.parent / "metrics.json").write_text(json.dumps(data, indent=1))
-        print(f"{meta['name']}: " + ", ".join(f"{k}={len(v)}" for k, v in data.items()))
+        print(f"{meta['name']}: " + ", ".join(f"{k}={len(v)}" for k, v in data.items() if isinstance(v, list)))
 
 
 if __name__ == "__main__":
     import sys
-    main(sys.argv[1:])  # optional name filters, for example: burst
+    args = [a for a in sys.argv[1:] if a != "--force"]
+    # optional name filters, for example: burst; --force rewrites existing files
+    main(args, force="--force" in sys.argv)

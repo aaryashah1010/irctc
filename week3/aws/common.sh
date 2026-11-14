@@ -42,6 +42,7 @@ CPU_TARGET="${CPU_TARGET:-50}"
 # UVICORN_WORKERS x DB_POOL_MAX_SIZE. Keep instances x that below the RDS limit.
 UVICORN_WORKERS="${UVICORN_WORKERS:-2}"
 DB_POOL_MAX_SIZE="${DB_POOL_MAX_SIZE:-8}"
+ADMISSION_LIMIT="${ADMISSION_LIMIT:-0}"   # 0 = load shedding off (see experiment R5)
 
 AWS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TMP_DIR="${AWS_DIR}/.tmp"

@@ -3,6 +3,7 @@
 #
 #   bash week3/aws/run-test.sh <name> steady <users> <spawn_rate> <duration>
 #   bash week3/aws/run-test.sh <name> shape  <ramp|burst>
+#   bash week3/aws/run-test.sh <name> correctness     (C1, load_tests/correctness_aws.py)
 #
 # Locust settings are passed through from LOCUST_* environment variables, for example
 #   LOCUST_WAIT_MIN=0.1 LOCUST_WAIT_MAX=0.3 bash week3/aws/run-test.sh n3 steady 800 50 3m
@@ -26,8 +27,16 @@ case "$MODE" in
     SHAPE="${3:?ramp or burst}"
     FILES="locustfile.py,shapes/${SHAPE}.py"
     ARGS="" ;;
-  *) echo "mode must be steady or shape"; exit 1 ;;
+  correctness)
+    FILES="" ;;
+  *) echo "mode must be steady, shape or correctness"; exit 1 ;;
 esac
+
+if [ "$MODE" = "correctness" ]; then
+  RUN_CMD="python3.12 correctness_aws.py ${HOST_URL} /opt/results/${NAME}/c1.json > /opt/results/${NAME}/c1.log 2>&1"
+else
+  RUN_CMD="python3.12 -m locust -f ${FILES} --headless --processes ${PROCESSES} ${ARGS} --host ${HOST_URL} --csv /opt/results/${NAME}/stats --html /opt/results/${NAME}/report.html > /opt/results/${NAME}/locust.log 2>&1"
+fi
 
 log "Uploading load-test files"
 SRC="$(cygpath -m "${AWS_DIR}/../load_tests" 2>/dev/null || echo "${AWS_DIR}/../load_tests")"
@@ -37,16 +46,14 @@ aws s3 sync "$SRC" "s3://${BUCKET}/loadtests" --delete \
 {
   echo '#!/bin/bash'
   echo 'set -x'
-  env | grep '^LOCUST_' | sed 's/^/export /'
+  { env | grep '^LOCUST_' || true; } | sed 's/^/export /'
   cat <<EOF
 rm -rf /opt/loadtest /opt/results/${NAME}
 mkdir -p /opt/loadtest /opt/results/${NAME}
 aws s3 sync s3://${BUCKET}/loadtests /opt/loadtest --delete --region ${REGION}
 cd /opt/loadtest
-python3.12 -m locust -f ${FILES} --headless --processes ${PROCESSES} ${ARGS} \\
-  --host ${HOST_URL} --csv /opt/results/${NAME}/stats \\
-  --html /opt/results/${NAME}/report.html > /opt/results/${NAME}/locust.log 2>&1
-echo "exit code: \$?" >> /opt/results/${NAME}/locust.log
+${RUN_CMD}
+echo "exit code: \$?" >> /opt/results/${NAME}/exit-code.txt
 aws s3 sync /opt/results/${NAME} s3://${BUCKET}/results/${NAME} --region ${REGION}
 EOF
 } > "${TMP_DIR}/run.sh"
@@ -73,6 +80,19 @@ INSTANCES="$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-n
   --query 'AutoScalingGroups[0].DesiredCapacity' --output text)"
 printf '{"name":"%s","mode":"%s","start":"%s","end":"%s","desired_capacity_at_end":%s}\n' \
   "$NAME" "$MODE" "$START_UTC" "$END_UTC" "$INSTANCES" > "${LOCAL_OUT}/meta.json"
+
+if [ "$MODE" = "correctness" ]; then
+  python - "$(cygpath -m "${LOCAL_OUT}")/c1.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+for r in d["results"]:
+    if not r["passed"]:
+        print("FAILED:", r["check"], r["detail"])
+print("C1: %d of %d checks passed" % (d["passed"], d["total"]))
+PY
+  echo "results saved in ${LOCAL_OUT}"
+  exit 0
+fi
 
 python - "$(cygpath -m "${LOCAL_OUT}")/stats_stats.csv" <<'PY'
 import csv, sys

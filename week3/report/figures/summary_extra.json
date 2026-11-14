@@ -1,0 +1,162 @@
+{
+ "c1": {
+  "c1-correctness": {
+   "passed": 29,
+   "total": 29
+  },
+  "c1-correctness-3instances": {
+   "passed": 29,
+   "total": 29
+  }
+ },
+ "ramp": {
+  "ramp-r0-fixed1": {
+   "requests": 424767,
+   "failures": 0,
+   "rps": 416.0662494977417,
+   "p50": 840.0,
+   "p95": 2000.0,
+   "p99": 2300.0,
+   "peak_instances": 1.0,
+   "db_cpu_peak": 27.285471112446178,
+   "app_cpu_peak": 99.77806701374983
+  },
+  "ramp-r1-fixed3": {
+   "requests": 871184,
+   "failures": 0,
+   "rps": 853.3448146699959,
+   "p50": 91.0,
+   "p95": 1600.0,
+   "p99": 2100.0,
+   "peak_instances": 3.0,
+   "db_cpu_peak": 48.853547827247844,
+   "app_cpu_peak": 80.94146361382293
+  },
+  "ramp-r2-autoscale": {
+   "requests": 565873,
+   "failures": 0,
+   "rps": 554.2572427787715,
+   "p50": 380.0,
+   "p95": 1800.0,
+   "p99": 2200.0,
+   "peak_instances": 6.0,
+   "db_cpu_peak": 39.29857914748849,
+   "app_cpu_peak": 99.90185314568986
+  }
+ },
+ "scheduled": {
+  "requests": 719752,
+  "failures": 0,
+  "rps": 1074.0267826959248,
+  "p50": 66.0,
+  "p95": 1300.0,
+  "p99": 1600.0,
+  "schedule": {
+   "scheduled_action_start": "2026-11-12T08:53:00Z"
+  },
+  "peak_instances": 6.0,
+  "db_cpu_peak": 58.76527181330936
+ },
+ "shed": {
+  "reactive": {
+   "/availability": {
+    "requests": 127004,
+    "p50": 1300.0,
+    "p95": 1700.0,
+    "p99": 2700.0
+   },
+   "/book": {
+    "requests": 126871,
+    "p50": 1400.0,
+    "p95": 1700.0,
+    "p99": 2700.0
+   },
+   "shed_requests": 0,
+   "served_requests": 253875,
+   "shed_share": 0.0
+  },
+  "shedding": {
+   "/availability": {
+    "requests": 117504,
+    "p50": 1400.0,
+    "p95": 1800.0,
+    "p99": 1900.0
+   },
+   "/book": {
+    "requests": 117170,
+    "p50": 1500.0,
+    "p95": 1900.0,
+    "p99": 2000.0
+   },
+   "shed_requests": 0,
+   "served_requests": 234674,
+   "shed_share": 0.0
+  }
+ },
+ "failure": {
+  "requests": 501206,
+  "failures": 5964,
+  "rps": 1391.8900382240179,
+  "p50": 86.0,
+  "p95": 890.0,
+  "p99": 1100.0,
+  "kill_minute": 1.98,
+  "first_failure_minute": 2.27,
+  "last_failure_minute": 2.95,
+  "failure_window_s": 41,
+  "min_instances": 2.0,
+  "elb_5xx": 5964.0,
+  "target_5xx": 0
+ },
+ "consistency": {
+  "burst-scheduled": {
+   "trains": 205,
+   "bookings": 358738,
+   "seats_sold": 358738,
+   "violations": 0,
+   "examples": []
+  },
+  "burst-shed": {
+   "trains": 205,
+   "bookings": 117499,
+   "seats_sold": 117499,
+   "violations": 0,
+   "examples": []
+  },
+  "c1-correctness-3instances": {
+   "trains": 205,
+   "bookings": 15,
+   "seats_sold": 21,
+   "violations": 0,
+   "examples": []
+  },
+  "failure-kill-1instance": {
+   "trains": 205,
+   "bookings": 247730,
+   "seats_sold": 247730,
+   "violations": 0,
+   "examples": []
+  },
+  "ramp-r0-fixed1": {
+   "trains": 205,
+   "bookings": 213015,
+   "seats_sold": 213015,
+   "violations": 0,
+   "examples": []
+  },
+  "ramp-r1-fixed3": {
+   "trains": 205,
+   "bookings": 436149,
+   "seats_sold": 436149,
+   "violations": 0,
+   "examples": []
+  },
+  "ramp-r2-autoscale": {
+   "trains": 205,
+   "bookings": 282743,
+   "seats_sold": 282743,
+   "violations": 0,
+   "examples": []
+  }
+ }
+}
