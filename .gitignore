@@ -14,3 +14,6 @@ venv/
 .coverage
 htmlcov/
 locust_report.html
+
+# Internal reference - not for git
+docs/project-explanation.md
